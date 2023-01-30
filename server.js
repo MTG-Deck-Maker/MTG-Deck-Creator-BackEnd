@@ -29,6 +29,53 @@ app.get('/', (req, res) => {
   res.status(200).send('Welcome!');
 });
 
+app.get('/card', getCard);
+async function getCard(req, res, next) {
+  try {
+    let allBooks = await Card.find({});
+    res.status(200).send(allBooks);
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+app.delete('/card/:cardId', deleteCard);
+async function deleteCard(req, res, next) {
+  try {
+    let id = req.params.bookID;
+    await Card.findByIdAndDelete(id);
+    res.status(200).send('card deleted');
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+app.post('/books', postBook);
+async function postBook(req, res, next) {
+  try {
+    let createdBook = await (Card.create(req.body));
+    res.status(200).send(createdBook);
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+app.put('/books/:bookId', updateBook);
+async function updateBook(req, res, next){
+  try {
+    let id = req.params.bookId;
+    let bookData = req.body;
+    const updatedBook = await Card.findByIdAndUpdate(id, bookData, { new: true, overwrite: true });
+    res.status(200).send(updatedBook);
+
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
 
 app.get('*', (req, res) => {
   res.status(404).send('Not available.');
