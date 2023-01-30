@@ -6,8 +6,6 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const mtg = require('mtgsdk');
 
-
-
 const Card = require('./models/card');
 
 mongoose.connect(process.env.DB_URL);
@@ -24,26 +22,38 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3002;
 
-
-app.get('/', (req, res) => {
-  res.status(200).send('Welcome!');
-});
-
-app.get('/card', getCard);
-async function getCard(req, res, next) {
+// GET SAVED CARDS FROM DATABASE
+app.get('/card', savedCard);
+async function savedCard(req, res, next){
   try {
-    let allBooks = await Card.find({});
-    res.status(200).send(allBooks);
+    let savedCard = await Card.find({});
+    res.status(200).send(savedCard);
   } catch (error) {
     console.log(error.message);
     next(error);
   }
 }
 
+// GET SEARCH CARDS FROM MTG API
+app.get('/card/:name', getCard);
+async function getCard(req, res, next) {
+  try {
+    let searchCard = await mtg.card.where({ name: `${req.params.name}` })
+      .then(results => {
+        return (results);
+      });
+    res.status(200).send(searchCard);
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+// DELETE CARDS FROM DATABASE
 app.delete('/card/:cardId', deleteCard);
 async function deleteCard(req, res, next) {
   try {
-    let id = req.params.bookID;
+    let id = req.params.cardId;
     await Card.findByIdAndDelete(id);
     res.status(200).send('card deleted');
   } catch (error) {
@@ -52,24 +62,26 @@ async function deleteCard(req, res, next) {
   }
 }
 
-app.post('/books', postBook);
-async function postBook(req, res, next) {
+// ADD/SAVE CARD TO DATABASE
+app.post('/card', postCard);
+async function postCard(req, res, next) {
   try {
-    let createdBook = await (Card.create(req.body));
-    res.status(200).send(createdBook);
+    let createdCard = await (Card.create(req.body));
+    res.status(200).send(createdCard);
   } catch (error) {
     console.log(error.message);
     next(error);
   }
 }
 
-app.put('/books/:bookId', updateBook);
-async function updateBook(req, res, next){
+// UPDATE CARD OWNED STATUS
+app.put('/card/:cardId', updateCard);
+async function updateCard(req, res, next) {
   try {
-    let id = req.params.bookId;
-    let bookData = req.body;
-    const updatedBook = await Card.findByIdAndUpdate(id, bookData, { new: true, overwrite: true });
-    res.status(200).send(updatedBook);
+    let id = req.params.cardId;
+    let cardData = req.body;
+    const updatedCard = await Card.findByIdAndUpdate(id, cardData, { new: true, overwrite: true });
+    res.status(200).send(updatedCard);
 
   } catch (error) {
     console.log(error.message);
@@ -77,11 +89,12 @@ async function updateBook(req, res, next){
   }
 }
 
+// ERROR HANDLING
 app.get('*', (req, res) => {
   res.status(404).send('Not available.');
 });
 
-app.use((error, req, res) => {
+app.use((error, req, res, next) => {
   res.status(500).send(error.message);
 });
 

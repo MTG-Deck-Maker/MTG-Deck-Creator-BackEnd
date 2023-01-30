@@ -6,7 +6,9 @@ const { Schema } = mongoose;
 
 const cardSchema = new Schema({
   name: { type: String, required: true },
-  uri: String,
+  rarity: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+  owned: { type: Boolean, required: true }
 });
 
 const CardModel = mongoose.model('card', cardSchema);
