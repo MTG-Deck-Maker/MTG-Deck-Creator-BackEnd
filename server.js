@@ -73,7 +73,6 @@ app.get('/card', savedCard);
 async function savedCard(req, res, next) {
   try {
 
-    console.log(req.user.email);
     let savedCard = await Card.find({ email: req.user.email });
     res.status(200).send(savedCard);
   } catch (error) {
