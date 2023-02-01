@@ -5,8 +5,9 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const mtg = require('mtgsdk');
-
 const Card = require('./models/card');
+
+const verifyUser = require('./auth');
 
 mongoose.connect(process.env.DB_URL);
 
@@ -21,18 +22,6 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3002;
-
-// GET SAVED CARDS FROM DATABASE
-app.get('/card', savedCard);
-async function savedCard(req, res, next){
-  try {
-    let savedCard = await Card.find({});
-    res.status(200).send(savedCard);
-  } catch (error) {
-    console.log(error.message);
-    next(error);
-  }
-}
 
 // GET SEARCH CARDS FROM MTG API
 app.get('/card/:name', getCard);
@@ -62,18 +51,6 @@ async function deleteCard(req, res, next) {
   }
 }
 
-// ADD/SAVE CARD TO DATABASE
-app.post('/card', postCard);
-async function postCard(req, res, next) {
-  try {
-    let createdCard = await (Card.create(req.body));
-    res.status(200).send(createdCard);
-  } catch (error) {
-    console.log(error.message);
-    next(error);
-  }
-}
-
 // UPDATE CARD OWNED STATUS
 app.put('/card/:cardId', updateCard);
 async function updateCard(req, res, next) {
@@ -83,6 +60,36 @@ async function updateCard(req, res, next) {
     const updatedCard = await Card.findByIdAndUpdate(id, cardData, { new: true, overwrite: true });
     res.status(200).send(updatedCard);
 
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+app.use(verifyUser);
+
+// GET SAVED CARDS FROM DATABASE
+app.get('/card', savedCard);
+async function savedCard(req, res, next) {
+  try {
+
+    console.log(req.user.email);
+    let savedCard = await Card.find({ email: req.user.email });
+    res.status(200).send(savedCard);
+  } catch (error) {
+    console.log(error.message);
+    next(error);
+  }
+}
+
+// ADD/SAVE CARD TO DATABASE
+app.post('/card', postCard);
+async function postCard(req, res, next) {
+  try {
+
+   
+    let createdCard = await Card.create({ ...req.body, email: req.user.email });
+    res.status(200).send(createdCard);
   } catch (error) {
     console.log(error.message);
     next(error);
